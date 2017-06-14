@@ -4,6 +4,7 @@ const belCreateElement = require('bel').createElement
 const rbelRegister = require('rbel')
 const minidux = require('minidux')
 const yoyoUpdate = require('yo-yo').update
+const document = require('global/document')
 
 class Tram {
   constructor(options) {
@@ -43,9 +44,12 @@ class Tram {
   }
 
   mount(selector, pathName, state) {
+    if (typeof document.querySelector === 'undefined') {
+      throw new Error('document.querySelector is undefined, are you running on server? Use .toString instead')
+    }
     const target = (typeof selector) === 'string' ? document.querySelector(selector) : selector
     if (!target.firstElementChild) {
-      const targetChild = document.createElement('div')
+      const targetChild = belCreateElement`<div></div>`
       target.appendChild(targetChild)
     }
     const targetChild = target.firstElementChild
@@ -61,7 +65,11 @@ class Tram {
   }
 
   toString(pathName, state) {
-    return this.toNode(pathName, state).outerHTML
+    const node = this.toNode(pathName, state)
+    if (node.outerHTML) {
+      return this.toNode(pathName, state).outerHTML
+    }
+    return this.toNode(pathName, state).toString()
   }
 
   static html(registry) {
